@@ -7,7 +7,7 @@ const Home = () => {
 
   const handleLogout = () => {
     logout(); // this removes token + role from localStorage too
-    navigate("/");
+    navigate(`${import.meta.env.VITE_API_BASE}`); // redirect to home page
   };
 
   return (
@@ -15,7 +15,7 @@ const Home = () => {
       className="flex justify-center items-center h-screen bg-cover bg-center"
       style={{
         backgroundImage:
-          `url('https://images.unsplash.com/photo-1549921296-3a6b89e0f5f0?auto=format&fit=crop&w=1950&q=80')`,
+         `url('https://images.pexels.com/photos/3532540/pexels-photo-3532540.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2')`,
       }}
     >
       <div className="bg-white bg-opacity-70 p-10 rounded shadow text-center">
