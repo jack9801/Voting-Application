@@ -1,12 +1,9 @@
-# Node deps (if you ever run npm at root)
+# Node modules
 node_modules/
-package-lock.json
-yarn.lock
 
-# Environment files
-.env
-.env.local
-.env.*.local
+# Build output
+build/
+dist/
 
 # Logs
 logs/
@@ -15,18 +12,24 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# OS files
+# Runtime data
+pids
+*.pid
+*.seed
+
+# dotenv environment variables
+.env
+.env.local
+.env.*.local
+
+# Editor folders
+.vscode/
+.idea/
+
+# System files
 .DS_Store
 Thumbs.db
 
-# IDE / Editor
-.vscode/
-.idea/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-
-# Build output (if you ever build at root)
-dist/
-build/
+# React frontend (if built separately)
+Frontend/node_modules/
+Frontend/build/
