@@ -1,6 +1,5 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
 
@@ -12,11 +11,25 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middlewares
+const cors = require("cors");
+
+const allowedOrigins = [
+  "https://voting-application-gules.vercel.app",
+  "https://voting-application-git-main-jack9801s-projects.vercel.app"
+];
+
 app.use(cors({
-  origin: "https://voting-frontend.vercel.app", // ✅ actual frontend domain
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }));
+
 
 app.use(bodyParser.json());
 
