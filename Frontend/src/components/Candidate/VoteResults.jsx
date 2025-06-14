@@ -9,6 +9,7 @@ export default function VoteResults() {
  useEffect(() => {
   axios.get(`${import.meta.env.VITE_API_BASE}/candidate/party`)
     .then(res => {
+      console.log('API response:', res.data); 
       if (Array.isArray(res.data)) {
         setResults(res.data);
       } else {
