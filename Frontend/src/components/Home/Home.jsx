@@ -7,7 +7,7 @@ const Home = () => {
 
   const handleLogout = () => {
     logout(); // this removes token + role from localStorage too
-    navigate("/login");
+    navigate("/");
   };
 
   return (
