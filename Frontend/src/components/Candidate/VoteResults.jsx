@@ -7,6 +7,7 @@ export default function VoteResults() {
   const [error, setError] = useState("");
 
  useEffect(() => {
+  console.log('Fetching:', `${import.meta.env.VITE_API_BASE}/candidate/party`);
   axios.get(`${import.meta.env.VITE_API_BASE}/candidate/party`)
     .then(res => {
       console.log('API response:', res.data); 

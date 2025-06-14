@@ -5,7 +5,7 @@ function VoteResults() {
   const [results, setResults] = useState([]);
 
   useEffect(() => {
-    axios.get('${import.meta.env.VITE_API_BASE}/candidate/vote')
+    axios.get('${import.meta.env.VITE_API_BASE}/candidate/party')
       .then(res => setResults(res.data))
       .catch(err => console.error(err));
   }, []);
