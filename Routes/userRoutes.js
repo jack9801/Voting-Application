@@ -3,46 +3,54 @@ const router=express.Router();
 const User=require('./../model/user')
 const Candidate=require('./../model/candidate')
 const {jwtAuthMiddleware, generateToken}=require('./../jwt');
-router.post('/signup', async(req,res)=>{
-    try {
-        const  data=req.body;
-        const adminuser=await User.findOne({role:'Admin'});
-        if(data.role==='Admin' && adminuser){ // implement single admin
-            return res.status(400).json({message:'Admin already exists'});
-        }
+router.post('/signup', async (req, res) => {
+  try {
+    const data = req.body;
 
-        // make sure aadhar card contain 12 digit
-        if (!/^\d{12}$/.test(data.aadharcardNumber)) {
-            return res.status(400).json({ error: 'Aadhar Card Number must be exactly 12 digits' });
-        }
-        // check if user already exist
-        // Check if a user with the same Aadhar Card Number already exists
-        const existingUser = await User.findOne({ aadharcardNumber: data.aadharcardNumber });
-        if (existingUser) {
-            return res.status(400).json({ error: 'User with the same Aadhar Card Number already exists' });
-        }
-        // save newuser to database
-        const newuser=new User(data);
-        const response=await newuser.save();
-        res.status(200).json({
-            message:'User created successfully',
-            data:response
-        });
-
-        const payload={
-            id:response.id
-        }
-        console.log(JSON.stringify(payload));
-        const token = generateToken(payload);
-        res.status(200).json({response: response, token: token});
-
-        
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({error,message:'Error saving person'});
-        
+    // Only one admin allowed
+    const adminuser = await User.findOne({ role: 'Admin' });
+    if (data.role === 'Admin' && adminuser) {
+      return res.status(400).json({ message: 'Admin already exists' });
     }
+
+    // Validate Aadhar
+    if (!/^\d{12}$/.test(data.aadharcardNumber)) {
+      return res.status(400).json({ error: 'Aadhar Card Number must be exactly 12 digits' });
+    }
+
+    // Duplicate Aadhar or Mobile
+    const existingUser = await User.findOne({ aadharcardNumber: data.aadharcardNumber });
+    if (existingUser) {
+      return res.status(400).json({ error: 'User with same Aadhar already exists' });
+    }
+
+    const existingMobile = await User.findOne({ mobile: data.mobile });
+    if (existingMobile) {
+      return res.status(400).json({ error: 'Mobile number already in use' });
+    }
+
+    // Save user
+    const newuser = new User(data);
+    const response = await newuser.save();
+
+    const payload = { id: response.id };
+    const token = generateToken(payload);
+
+    res.status(200).json({
+      message: 'User created successfully',
+      data: response,
+      token: token,
+      user: {
+        role: response.role
+      }
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: 'Error saving user' });
+  }
 });
+
+
 // login user
 router.post('/login',async(req,res)=>{
     try {
@@ -59,7 +67,9 @@ router.post('/login',async(req,res)=>{
             id:user.id
         }
         const token = generateToken(payload);
-        res.status(200).json({message:'User logged in successfully',token:token});
+        res.status(200).json({message:'User logged in successfully',token:token,user: {
+    role: user.role // 👈 send role to frontend
+  }});
        
     } catch (error) {
         console.log(error);

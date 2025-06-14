@@ -62,10 +62,8 @@ router.get('/vote/:candidateID',jwtAuthMiddleware,async(req,res)=>{
     const userData=req.user.userData;
     const userId=userData.id;
     const user= await User.findById(userId);
-     candidateID = req.params.candidateID; 
-    console.log(candidateID);
+    const candidateID = req.params.candidateID; 
     const candidate= await Candidate.findById(candidateID);
-    console.log(candidate);
     if(!candidate){
         return res.status(400).json({message:'Inavlid Candiadte'});
     }
@@ -108,14 +106,13 @@ router.get('/vote',async(req,res)=>{
 
     return res.status(200).json(voteRecord);
 }catch(err){
-    console.log(err);
     res.status(500).json({error: 'Internal Server Error'});
 }
 });
 // get list of candidates with name, party, and age only
 router.get('/', async (req, res) => {
     try {
-        const candidates = await Candidate.find({}, 'name party age');
+        const candidates = await Candidate.find({}, 'name party age voteCount').sort({ voteCount: 'desc' });
         res.status(200).json({
             message: 'Candidates fetched successfully',
             data: candidates
@@ -128,6 +125,19 @@ router.get('/', async (req, res) => {
         });
     }
 });
+// GET /candidate/currentuser
+router.get('/currentUser', jwtAuthMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.userData.id;
+    const user = await User.findById(userId).select("-password"); // Don’t return password
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.status(200).json({ user });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
 
 
 module.exports=router;

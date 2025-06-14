@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const mongoDburl='mongodb://localhost:27017/voting';
+const mongoDburl=process.env.MONGODB_URL;
 mongoose.connect(mongoDburl);
 const db=mongoose.connection;
 db.on('connected', () => {
