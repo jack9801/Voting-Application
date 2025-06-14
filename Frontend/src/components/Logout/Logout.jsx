@@ -9,7 +9,7 @@ export default function Logout() {
   useEffect(() => {
     localStorage.removeItem('token');
     logout();
-    navigate(`${import.meta.env.VITE_API_BASE}`);
+    navigate('/');
   }, []);
 
   return null;

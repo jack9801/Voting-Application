@@ -7,7 +7,7 @@ const Home = () => {
 
   const handleLogout = () => {
     logout(); // this removes token + role from localStorage too
-    navigate(`${import.meta.env.VITE_API_BASE}`); // redirect to home page
+    navigate('/'); // redirect to home page
   };
 
   return (
