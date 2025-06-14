@@ -6,7 +6,7 @@ function VotePanel() {
   const token = localStorage.getItem('token'); // assuming token storage
 
   const vote = (id) => {
-    axios.get(`http://localhost:3000/candidate/vote/${id}`, {
+    axios.get(`${import.meta.env.VITE_API_BASE}/candidate/vote/${id}`, {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(res => alert(res.data.message))
@@ -14,7 +14,7 @@ function VotePanel() {
   };
 
   useEffect(() => {
-    axios.get('http://localhost:3000/candidate')
+    axios.get('${import.meta.env.VITE_API_BASE}/candidate')
       .then(res => setCandidates(res.data.data))
       .catch(err => console.error(err));
   }, []);

@@ -11,7 +11,7 @@ export default function Profile() {
         const token = localStorage.getItem('token');
         if (!token) return;
 
-        const res = await axios.get('http://localhost:3000/user/profile', {
+        const res = await axios.get(`${import.meta.env.VITE_API_BASE}/user/profile`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

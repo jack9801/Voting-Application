@@ -5,7 +5,7 @@ function CandidateList() {
   const [candidates, setCandidates] = useState([]);
 
   useEffect(() => {
-    axios.get('http://localhost:3000/candidate')
+    axios.get(`${import.meta.env.VITE_API_BASE}/candidate`)
       .then(res => setCandidates(res.data.data))
       .catch(err => console.error(err));
   }, []);

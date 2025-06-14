@@ -7,7 +7,7 @@ export default function VoteResults() {
   const [error, setError] = useState("");
 
  useEffect(() => {
-  axios.get('http://localhost:3000/candidate/vote')
+  axios.get(`${import.meta.env.VITE_API_BASE}/candidate/vote`)
     .then(res => {
       if (Array.isArray(res.data)) {
         setResults(res.data);

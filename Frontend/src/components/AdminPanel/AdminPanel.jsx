@@ -10,7 +10,7 @@ function AdminPanel() {
   };
 
   const handleSubmit = () => {
-    axios.post('http://localhost:3000/candidate', form, {
+    axios.post(`${import.meta.env.VITE_API_BASE}/candidate`, form, {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(res => alert('Candidate Added'))

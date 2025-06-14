@@ -16,14 +16,14 @@ const CandidateList = () => {
         const token = localStorage.getItem("token");
         if (!token) return;
 
-        const userRes = await axios.get("http://localhost:3000/candidate/currentUser", {
+        const userRes = await axios.get(`${import.meta.env.VITE_API_BASE}/candidate/currentUser`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
         setUser(userRes.data.user);
         localStorage.setItem("user", JSON.stringify(userRes.data.user));
 
-        const res = await axios.get("http://localhost:3000/candidate");
+        const res = await axios.get(`${import.meta.env.VITE_API_BASE}/candidate`);
         setCandidates(res.data.data);
       } catch (err) {
         console.error(err);
@@ -48,7 +48,7 @@ const CandidateList = () => {
     try {
       const token = localStorage.getItem("token");
 
-      const res = await axios.get(`http://localhost:3000/candidate/vote/${candidateId}`, {
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE}/candidate/vote/${candidateId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -57,7 +57,7 @@ const CandidateList = () => {
       setMessage("Thank you! Your vote has been recorded.");
 
       // Optionally: Refresh vote counts
-      const refresh = await axios.get("http://localhost:3000/candidate");
+      const refresh = await axios.get(`${import.meta.env.VITE_API_BASE}/candidate`);
       setCandidates(refresh.data.data);
 
     } catch (err) {
