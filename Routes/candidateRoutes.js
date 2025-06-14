@@ -109,6 +109,37 @@ router.get('/vote',async(req,res)=>{
     res.status(500).json({error: 'Internal Server Error'});
 }
 });
+
+// vote count (party-wise aggregation)
+router.get('/party', async (req, res) => {
+  try {
+    const candidates = await Candidate.find();
+
+    const partyVoteMap = {};
+
+    candidates.forEach(candidate => {
+      const party = candidate.party;
+      const votes = candidate.voteCount;
+
+      if (partyVoteMap[party]) {
+        partyVoteMap[party] += votes;
+      } else {
+        partyVoteMap[party] = votes;
+      }
+    });
+
+    const voteRecord = Object.entries(partyVoteMap).map(([party, count]) => ({
+      party,
+      count
+    }));
+
+    return res.status(200).json(voteRecord);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 // get list of candidates with name, party, and age only
 router.get('/', async (req, res) => {
     try {
