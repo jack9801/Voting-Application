@@ -15,7 +15,7 @@ const Home = () => {
       className="flex justify-center items-center h-screen bg-cover bg-center"
       style={{
         backgroundImage:
-          "url('https://images.unsplash.com/photo-1549921296-3a6b89e0f5f0?auto=format&fit=crop&w=1950&q=80')",
+          `url('https://images.unsplash.com/photo-1549921296-3a6b89e0f5f0?auto=format&fit=crop&w=1950&q=80')`,
       }}
     >
       <div className="bg-white bg-opacity-70 p-10 rounded shadow text-center">

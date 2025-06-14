@@ -7,7 +7,7 @@ function Header() {
 
   const handleLogout = () => {
     logout(); // clear auth state
-    navigate('/'); // go back to Home
+    navigate("/"); // go back to Home
   };
 
   return (
