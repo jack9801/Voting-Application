@@ -100,7 +100,7 @@ export default function AdminCampaign() {
   const fetchParties = async () => {
     try {
       const res = await axios.get(`${import.meta.env.VITE_API_BASE}/candidate/partylist`);
-      setParties(res.data || []);
+      setParties(res.data.parties || []);
     } catch (err) {
       console.error('Failed to fetch parties:', err);
     }
