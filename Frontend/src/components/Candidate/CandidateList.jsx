@@ -31,7 +31,7 @@ const CandidateList = () => {
         const candidateRes = await axios.get(`${import.meta.env.VITE_API_BASE}/candidate`);
         setCandidates(candidateRes.data.data);
 
-        const partyRes = await axios.get(`${import.meta.env.VITE_API_BASE}/partylist`); // You need to expose this route
+        const partyRes = await axios.get(`${import.meta.env.VITE_API_BASE}/candidate/partylist`); // You need to expose this route
         setParties(partyRes.data.parties || []);
       } catch (err) {
         console.error(err);
