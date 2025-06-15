@@ -45,7 +45,7 @@ router.post('/',jwtAuthMiddleware,async(req,res)=>{
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-router.post('/logo', jwtAuthMiddleware, upload.single('logoUrl'), async (req, res) => {
+router.post('/logo', jwtAuthMiddleware, upload.single('logo'), async (req, res) => {
   try {
     const userId = req.user.userData.id;
     if (!(await checkAdminRole(userId))) {
