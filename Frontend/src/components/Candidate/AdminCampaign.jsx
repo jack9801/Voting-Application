@@ -24,7 +24,7 @@ export default function AdminCampaign() {
   const createParty = async () => {
     const formData = new FormData();
     Object.keys(partyData).forEach(key => formData.append(key, partyData[key]));
-    await axios.post(`${import.meta.env.VITE_API_BASE}/logo`, formData, {
+    await axios.post(`${import.meta.env.VITE_API_BASE}/candidate/logo`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
   };
