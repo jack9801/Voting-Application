@@ -1,7 +1,11 @@
 const express = require('express')
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 const router=express.Router();
 const User=require('./../model/user')
 const Candidate=require('./../model/candidate')
+const Party=require('./../model/party');
 const {jwtAuthMiddleware, generateToken}=require('./../jwt');
 const checkAdminRole=async(userId)=>{
     try{
@@ -37,6 +41,41 @@ router.post('/',jwtAuthMiddleware,async(req,res)=>{
         
     }
 });
+ // party logo upload 
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+
+router.post('/logo', jwtAuthMiddleware, upload.single('logoUrl'), async (req, res) => {
+  try {
+    const userId = req.user.userData.id;
+    if (!(await checkAdminRole(userId))) {
+      return res.status(403).json({ message: 'Only admin can create party' });
+    }
+    const { name, colorTheme, startTime, endTime } = req.body;
+    const logoBase64 = req.file.buffer.toString('base64');
+    const mimeType = req.file.mimetype;
+    const logo = `data:${mimeType};base64,${logoBase64}`; // for direct display
+    const party = new Party({ name, colorTheme, startTime, endTime, logo });
+    await party.save();
+    res.status(201).json({ message: 'Party created', data: party });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Failed to create party' });
+  }
+});
+
+// Get all parties with logo
+router.get('/partylist', async (req, res) => {
+  try {
+    const parties = await Party.find({}, 'name logo'); // only fetch name and logo
+    res.status(200).json({ parties });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Failed to fetch party list' });
+  }
+});
+
+
 // update existing candidate
 router.put('/:id',async(req,res)=>{
     try {

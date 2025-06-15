@@ -4,12 +4,18 @@ import { useNavigate } from "react-router-dom";
 
 const CandidateList = () => {
   const [candidates, setCandidates] = useState([]);
+  const [parties, setParties] = useState([]);
   const [user, setUser] = useState(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
 
-  // Fetch user and candidates
+  // Map party names to logo URLs
+  const partyLogoMap = parties.reduce((acc, party) => {
+    acc[party.name] = party.logo;
+    return acc;
+  }, {});
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -19,15 +25,17 @@ const CandidateList = () => {
         const userRes = await axios.get(`${import.meta.env.VITE_API_BASE}/candidate/currentUser`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-
         setUser(userRes.data.user);
         localStorage.setItem("user", JSON.stringify(userRes.data.user));
 
-        const res = await axios.get(`${import.meta.env.VITE_API_BASE}/candidate`);
-        setCandidates(res.data.data);
+        const candidateRes = await axios.get(`${import.meta.env.VITE_API_BASE}/candidate`);
+        setCandidates(candidateRes.data.data);
+
+        const partyRes = await axios.get(`${import.meta.env.VITE_API_BASE}/partylist`); // You need to expose this route
+        setParties(partyRes.data.parties || []);
       } catch (err) {
         console.error(err);
-        setError("Failed to fetch user or candidates.");
+        setError("Failed to fetch user, candidates, or parties.");
       }
     };
 
@@ -47,19 +55,15 @@ const CandidateList = () => {
 
     try {
       const token = localStorage.getItem("token");
-
       const res = await axios.get(`${import.meta.env.VITE_API_BASE}/candidate/vote/${candidateId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       alert(res.data.message);
-      setUser({ ...user, isvoted: true }); // locally mark as voted
-      setMessage("Thank you! Your vote has been recorded.");
+      setUser({ ...user, isvoted: true });
 
-      // Optionally: Refresh vote counts
       const refresh = await axios.get(`${import.meta.env.VITE_API_BASE}/candidate`);
       setCandidates(refresh.data.data);
-
     } catch (err) {
       console.error(err);
       alert(err.response?.data?.message || "Something went wrong");
@@ -92,27 +96,34 @@ const CandidateList = () => {
       ) : (
         <ul className="space-y-4">
           {candidates.map((c) => (
-            <li key={c._id} className="p-4 border rounded bg-gray-100">
-  <p><strong>Name:</strong> {c.name}</p>
-  <p><strong>Party:</strong> {c.party}</p>
-  <p><strong>Age:</strong> {c.age}</p>
+            <li key={c._id} className="p-4 border rounded bg-gray-50 shadow-sm flex items-center space-x-4">
+              {partyLogoMap[c.party] ? (
+                <img src={partyLogoMap[c.party]} alt={`${c.party} logo`} className="w-16 h-16 rounded-full border" />
+              ) : (
+                <div className="w-16 h-16 rounded-full bg-gray-200" />
+              )}
 
-  {user?.role === "Admin" ? (
-    <p className="text-green-700 font-semibold">
-      <strong>Votes:</strong> {c.voteCount}
-    </p>
-  ) : user?.role === "voter" && !user?.isvoted ? (
-    <button
-      onClick={() => voteHandler(c._id)}
-      className="mt-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-    >
-      Vote
-    </button>
-  ) : user?.role === "voter" && user?.isvoted ? (
-    <p className="mt-2 text-gray-600">You have already voted.</p>
-  ) : null}
-</li>
+              <div className="flex-grow">
+                <p><strong>Name:</strong> {c.name}</p>
+                <p><strong>Party:</strong> {c.party}</p>
+                <p><strong>Age:</strong> {c.age}</p>
 
+                {user?.role === "Admin" ? (
+                  <p className="text-green-700 font-semibold">
+                    <strong>Votes:</strong> {c.voteCount}
+                  </p>
+                ) : user?.role === "voter" && !user?.isvoted ? (
+                  <button
+                    onClick={() => voteHandler(c._id)}
+                    className="mt-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                  >
+                    Vote
+                  </button>
+                ) : user?.role === "voter" && user?.isvoted ? (
+                  <p className="mt-2 text-gray-600">You have already voted.</p>
+                ) : null}
+              </div>
+            </li>
           ))}
         </ul>
       )}

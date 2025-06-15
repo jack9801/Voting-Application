@@ -54,21 +54,31 @@ const Home = () => {
               View Candidate List
             </button>
 
-            {role === "Admin" && (<>
-              <button
-                onClick={() => navigate("/admin/candidate-form")}
-                className="bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-2 px-4 rounded w-full"
-              >
-                Create/Update Candidate
-              </button>
-                              <button
-                      onClick={() => navigate("/results")}
-                      className="bg-pink-600 hover:bg-pink-700 text-white font-semibold py-2 px-4 rounded w-full"
-                    >
-                      View Vote Count
-                    </button>
-                    </>
-            )}
+            {role === "Admin" && (
+                                  <>
+                                    <button
+                                      onClick={() => navigate("/admin/candidate-form")}
+                                      className="bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-2 px-4 rounded w-full"
+                                    >
+                                      Create/Update Candidate
+                                    </button>
+
+                                    <button
+                                      onClick={() => navigate("/admin/campaign")}
+                                      className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded w-full"
+                                    >
+                                      Create/Update Party
+                                    </button>
+
+                                    <button
+                                      onClick={() => navigate("/results")}
+                                      className="bg-pink-600 hover:bg-pink-700 text-white font-semibold py-2 px-4 rounded w-full"
+                                    >
+                                      View Vote Count
+                                    </button>
+                                  </>
+                                )}
+
 
             <button
               onClick={handleLogout}
