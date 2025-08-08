@@ -57,9 +57,9 @@ const Home = () => {
             </button>
             {role === 'Admin' && (
               <>
-              <button
+                <button
                     onClick={() => navigate("/admin/campaign")}
-                    className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded w-full"
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg text-lg transition duration-300 ease-in-out transform hover:scale-105"
                 >
                     Create/Update Party
                 </button>
