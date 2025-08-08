@@ -42,12 +42,16 @@ const AdminCampaign = () => {
     setMessage(prev => ({ ...prev, party: '' }));
     const token = localStorage.getItem('token');
 
+    // **THE FIX: Convert local datetimes to UTC ISO strings**
+    const utcStartTime = new Date(partyData.startTime).toISOString();
+    const utcEndTime = new Date(partyData.endTime).toISOString();
+
     const formData = new FormData();
-    Object.keys(partyData).forEach(key => formData.append(key, partyData[key]));
-    
-    // THE FIX: Get and append the client's timezone offset
-    const timezoneOffset = new Date().getTimezoneOffset();
-    formData.append('timezoneOffset', timezoneOffset);
+    formData.append('name', partyData.name);
+    formData.append('colorTheme', partyData.colorTheme);
+    formData.append('logo', partyData.logo);
+    formData.append('startTime', utcStartTime); // Send the converted UTC string
+    formData.append('endTime', utcEndTime);   // Send the converted UTC string
 
     try {
       await axios.post(`${import.meta.env.VITE_API_BASE}/candidate/logo`, formData, {
@@ -58,10 +62,9 @@ const AdminCampaign = () => {
       });
       setMessage(prev => ({ ...prev, party: 'Party created successfully!' }));
       fetchParties();
-      // Reset form
       setPartyData({ name: '', colorTheme: '#000000', startTime: '', endTime: '', logo: null });
       setLogoPreview(null);
-      e.target.reset(); // Clears the file input
+      e.target.reset();
     } catch (err) {
       setMessage(prev => ({ ...prev, party: err.response?.data?.message || 'Failed to create party' }));
     } finally {
@@ -83,7 +86,6 @@ const AdminCampaign = () => {
         }
       });
       setMessage(prev => ({ ...prev, candidate: 'Candidate created successfully!' }));
-      // Reset form
       setCandidateData({ name: '', age: '', party: '' });
     } catch (err) {
       setMessage(prev => ({ ...prev, candidate: err.response?.data?.message || 'Failed to create candidate' }));
@@ -110,7 +112,6 @@ const AdminCampaign = () => {
       <div className="max-w-4xl mx-auto">
         <h2 className="text-4xl font-bold text-gray-800 mb-8 text-center">Campaign Management</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Create Party Form */}
           <div className="bg-white rounded-xl shadow-lg p-8">
             <h3 className="text-2xl font-bold mb-6 text-indigo-700 flex items-center"><FaUsers className="mr-3" /> Create a New Party</h3>
             <form onSubmit={createParty} className="space-y-4">
@@ -128,8 +129,6 @@ const AdminCampaign = () => {
               {message.party && <p className={`mt-4 text-center ${message.party.includes('success') ? 'text-green-600' : 'text-red-500'}`}>{message.party}</p>}
             </form>
           </div>
-
-          {/* Create Candidate Form */}
           <div className="bg-white rounded-xl shadow-lg p-8">
             <h3 className="text-2xl font-bold mb-6 text-teal-700 flex items-center"><FaUserPlus className="mr-3" /> Add a New Candidate</h3>
             <form onSubmit={createCandidate} className="space-y-4">

@@ -53,16 +53,9 @@ router.post('/logo', jwtAuthMiddleware, upload.single('logo'), async (req, res) 
       return res.status(403).json({ message: 'Only admin can create party' });
     }
     
-    // Process timezone offset here**
-    const { name, colorTheme, startTime, endTime, timezoneOffset } = req.body;
-
-    const localStartTime = new Date(startTime);
-    const localEndTime = new Date(endTime);
-
-    // The offset is in minutes, so we convert it to milliseconds
-    const offsetMilliseconds = parseInt(timezoneOffset) * 60 * 1000;
-    const utcStartTime = new Date(localStartTime.getTime() - offsetMilliseconds);
-    const utcEndTime = new Date(localEndTime.getTime() - offsetMilliseconds);
+    // THE FIX: No more timezone math needed here.
+    // The startTime and endTime are already in UTC ISO format.
+    const { name, colorTheme, startTime, endTime } = req.body;
 
     const logoBase64 = req.file.buffer.toString('base64');
     const mimeType = req.file.mimetype;
@@ -71,8 +64,8 @@ router.post('/logo', jwtAuthMiddleware, upload.single('logo'), async (req, res) 
     const party = new Party({ 
         name, 
         colorTheme, 
-        startTime: utcStartTime, 
-        endTime: utcEndTime,     // Save the corrected UTC time
+        startTime, // Save the UTC time directly
+        endTime,   // Save the UTC time directly
         logo 
     });
     
@@ -83,6 +76,7 @@ router.post('/logo', jwtAuthMiddleware, upload.single('logo'), async (req, res) 
     res.status(500).json({ message: 'Failed to create party' });
   }
 });
+
 // Get all parties with logo
 router.get('/partylist', async (req, res) => {
   try {
