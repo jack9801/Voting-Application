@@ -49,23 +49,40 @@ const upload = multer({ storage });
 
 router.post('/logo', jwtAuthMiddleware, upload.single('logo'), async (req, res) => {
   try {
-    const userId = req.user.userData.id;
-    if (!(await checkAdminRole(userId))) {
+    if (!(await checkAdminRole(req.user.userData.id))) {
       return res.status(403).json({ message: 'Only admin can create party' });
     }
-    const { name, colorTheme, startTime, endTime } = req.body;
+    
+    // Process timezone offset here**
+    const { name, colorTheme, startTime, endTime, timezoneOffset } = req.body;
+
+    const localStartTime = new Date(startTime);
+    const localEndTime = new Date(endTime);
+
+    // The offset is in minutes, so we convert it to milliseconds
+    const offsetMilliseconds = parseInt(timezoneOffset) * 60 * 1000;
+    const utcStartTime = new Date(localStartTime.getTime() - offsetMilliseconds);
+    const utcEndTime = new Date(localEndTime.getTime() - offsetMilliseconds);
+
     const logoBase64 = req.file.buffer.toString('base64');
     const mimeType = req.file.mimetype;
-    const logo = `data:${mimeType};base64,${logoBase64}`; // for direct display
-    const party = new Party({ name, colorTheme, startTime, endTime, logo });
+    const logo = `data:${mimeType};base64,${logoBase64}`;
+
+    const party = new Party({ 
+        name, 
+        colorTheme, 
+        startTime: utcStartTime, 
+        endTime: utcEndTime,     // Save the corrected UTC time
+        logo 
+    });
+    
     await party.save();
-    res.status(201).json({ message: 'Party created', data: party });
+    res.status(201).json({ message: 'Party created successfully', data: party });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Failed to create party' });
   }
 });
-
 // Get all parties with logo
 router.get('/partylist', async (req, res) => {
   try {

@@ -10,11 +10,13 @@ const AdminCampaign = () => {
     endTime: '',
     logo: null
   });
+
   const [candidateData, setCandidateData] = useState({
     name: '',
     age: '',
     party: ''
   });
+
   const [logoPreview, setLogoPreview] = useState(null);
   const [parties, setParties] = useState([]);
   const [loading, setLoading] = useState({ party: false, candidate: false });
@@ -42,16 +44,24 @@ const AdminCampaign = () => {
 
     const formData = new FormData();
     Object.keys(partyData).forEach(key => formData.append(key, partyData[key]));
+    
+    // THE FIX: Get and append the client's timezone offset
+    const timezoneOffset = new Date().getTimezoneOffset();
+    formData.append('timezoneOffset', timezoneOffset);
 
     try {
       await axios.post(`${import.meta.env.VITE_API_BASE}/candidate/logo`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${token}` }
+        headers: { 
+          'Content-Type': 'multipart/form-data', 
+          Authorization: `Bearer ${token}` 
+        }
       });
       setMessage(prev => ({ ...prev, party: 'Party created successfully!' }));
       fetchParties();
       // Reset form
       setPartyData({ name: '', colorTheme: '#000000', startTime: '', endTime: '', logo: null });
       setLogoPreview(null);
+      e.target.reset(); // Clears the file input
     } catch (err) {
       setMessage(prev => ({ ...prev, party: err.response?.data?.message || 'Failed to create party' }));
     } finally {
@@ -67,7 +77,10 @@ const AdminCampaign = () => {
 
     try {
       await axios.post(`${import.meta.env.VITE_API_BASE}/candidate`, candidateData, {
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
+        headers: { 
+          'Content-Type': 'application/json', 
+          Authorization: `Bearer ${token}` 
+        }
       });
       setMessage(prev => ({ ...prev, candidate: 'Candidate created successfully!' }));
       // Reset form
@@ -102,10 +115,10 @@ const AdminCampaign = () => {
             <h3 className="text-2xl font-bold mb-6 text-indigo-700 flex items-center"><FaUsers className="mr-3" /> Create a New Party</h3>
             <form onSubmit={createParty} className="space-y-4">
               <input name="name" placeholder="Party Name" value={partyData.name} onChange={handlePartyChange} className="w-full p-3 border rounded-lg" required />
-              <input name="colorTheme" type="color" value={partyData.colorTheme} onChange={handlePartyChange} className="w-full h-12 p-1 border rounded-lg" />
+              <input name="colorTheme" type="color" value={partyData.colorTheme} onChange={handlePartyChange} className="w-full h-12 p-1 border rounded-lg" title="Select a theme color" />
               <div className="grid grid-cols-2 gap-4">
-                <input name="startTime" type="datetime-local" onChange={handlePartyChange} className="w-full p-3 border rounded-lg" required />
-                <input name="endTime" type="datetime-local" onChange={handlePartyChange} className="w-full p-3 border rounded-lg" required />
+                <input name="startTime" type="datetime-local" onChange={handlePartyChange} className="w-full p-3 border rounded-lg" required title="Election Start Time" />
+                <input name="endTime" type="datetime-local" onChange={handlePartyChange} className="w-full p-3 border rounded-lg" required title="Election End Time" />
               </div>
               <input name="logo" type="file" accept="image/*" onChange={handlePartyChange} className="w-full p-2 border rounded-lg" required/>
               {logoPreview && <img src={logoPreview} alt="Logo Preview" className="w-24 h-24 object-contain mx-auto border rounded-lg mt-2" />}
