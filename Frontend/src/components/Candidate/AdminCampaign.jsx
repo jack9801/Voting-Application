@@ -42,7 +42,8 @@ const AdminCampaign = () => {
     setMessage(prev => ({ ...prev, party: '' }));
     const token = localStorage.getItem('token');
 
-    // **THE FIX: Convert local datetimes to UTC ISO strings**
+    // **THE DEFINITIVE FIX:** Create Date objects from the local time strings.
+    // .toISOString() correctly converts them to UTC. This is the most reliable method.
     const utcStartTime = new Date(partyData.startTime).toISOString();
     const utcEndTime = new Date(partyData.endTime).toISOString();
 
@@ -50,8 +51,8 @@ const AdminCampaign = () => {
     formData.append('name', partyData.name);
     formData.append('colorTheme', partyData.colorTheme);
     formData.append('logo', partyData.logo);
-    formData.append('startTime', utcStartTime); // Send the converted UTC string
-    formData.append('endTime', utcEndTime);   // Send the converted UTC string
+    formData.append('startTime', utcStartTime); // Send the correct UTC string
+    formData.append('endTime', utcEndTime);   // Send the correct UTC string
 
     try {
       await axios.post(`${import.meta.env.VITE_API_BASE}/candidate/logo`, formData, {
