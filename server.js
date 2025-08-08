@@ -1,7 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const path = require('path');
 require('dotenv').config();
-const cors = require("cors");
 
 const db = require('./db');
 const userRoutes = require('./Routes/userRoutes');
@@ -9,6 +9,9 @@ const candidateRoutes = require('./Routes/candidateRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Middlewares
+const cors = require("cors");
 
 const allowedOrigins = [
   "https://voting-application-gules.vercel.app",
@@ -23,12 +26,10 @@ app.use(cors({
       callback(new Error("Not allowed by CORS"));
     }
   },
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Allow all necessary methods
+  methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }));
 
-// Handle pre-flight requests for all routes
-app.options('*', cors()); 
 
 app.use(bodyParser.json());
 
@@ -36,10 +37,6 @@ app.use(bodyParser.json());
 app.use('/user', userRoutes);
 app.use('/candidate', candidateRoutes);
 
-// API 404 Not Found Middleware
-app.use((req, res, next) => {
-  res.status(404).json({ message: `API route not found: ${req.method} ${req.originalUrl}` });
-});
 
 // Start server
 app.listen(PORT, () => {
