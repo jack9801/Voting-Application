@@ -6,6 +6,7 @@ require('dotenv').config();
 const db = require('./db');
 const userRoutes = require('./Routes/userRoutes');
 const candidateRoutes = require('./Routes/candidateRoutes');
+const adminRoutes = require('./Routes/admin.js'); // 1. Import the admin routes
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -37,15 +38,12 @@ app.use(bodyParser.json());
 // API Routes
 app.use('/user', userRoutes);
 app.use('/candidate', candidateRoutes);
+app.use('/admin', adminRoutes); // 2. Use the admin routes with the '/admin' prefix
 
-// Serve frontend files for production
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, 'Frontend/dist')));
-
-  app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, 'Frontend/dist', 'index.html'));
-  });
-}
+// API 404 Not Found Middleware - This will catch any API calls that don't match the routes above
+app.use('/api', (req, res, next) => {
+  res.status(404).json({ message: `API route not found: ${req.method} ${req.originalUrl}` });
+});
 
 
 // Start server

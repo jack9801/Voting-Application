@@ -7,7 +7,6 @@ export default function ProtectedRoute({ children, adminOnly = false }) {
   if (!isAuthenticated) {
     return <Navigate to="/login" />;
   }
-  
   if (adminOnly && role !== 'Admin') {
     return <Navigate to="/candidates" />; 
   }
