@@ -140,31 +140,31 @@ router.get('/voters', jwtAuthMiddleware, async (req, res) => {
     }
 });
 
-// GET /candidate/party/download - Download vote results as CSV
-router.get('/party/download', async (req, res) => {
-  try {
-    const candidates = await Candidate.find();
-    const partyVoteMap = {};
+// GET /voters/download - Download voter list as CSV (Admin Only)
+router.get('/voters/download', jwtAuthMiddleware, async (req, res) => {
+    try {
+        if (!(await checkAdminRole(req.user.userData.id))) {
+            return res.status(403).json({ message: 'Access denied. Admins only.' });
+        }
 
-    candidates.forEach(candidate => {
-      const party = candidate.party;
-      const votes = candidate.voteCount;
-      partyVoteMap[party] = (partyVoteMap[party] || 0) + votes;
-    });
+        const voters = await User.find({ role: 'voter' }).select('name email aadharcardNumber mobile age isvoted').lean();
+        
+        if (voters.length === 0) {
+            return res.status(404).send('No voter data to export.');
+        }
 
-    const voteRecord = Object.entries(partyVoteMap).map(([party, count]) => ({ party, count }));
-    
-    const fields = ['party', 'count'];
-    const json2csvParser = new Parser({ fields });
-    const csv = json2csvParser.parse(voteRecord);
+        const fields = ['name', 'email', 'aadharcardNumber', 'mobile', 'age', 'isvoted'];
+        const json2csvParser = new Parser({ fields });
+        const csv = json2csvParser.parse(voters);
 
-    res.header('Content-Type', 'text/csv');
-    res.attachment("results.csv");
-    return res.send(csv);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
+        res.header('Content-Type', 'text/csv');
+        res.attachment("voters-list.csv");
+        return res.send(csv);
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Internal Server Error during file export.' });
+    }
 });
 
 

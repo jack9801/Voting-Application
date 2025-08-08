@@ -243,7 +243,7 @@ router.delete('/:id', jwtAuthMiddleware, async (req, res) => {
 
 
 // GET /candidate/party/download - Download vote results as CSV
-router.get('/party/download', async (req, res) => {
+router.get('/party/download',jwtAuthMiddleware, async (req, res) => {
   try {
     const candidates = await Candidate.find();
     const partyVoteMap = {};
