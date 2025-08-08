@@ -1,16 +1,17 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { FaUserTie, FaVoteYea } from 'react-icons/fa';
 
 const CandidateList = () => {
   const [candidates, setCandidates] = useState([]);
   const [parties, setParties] = useState([]);
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
 
-  // Map party names to logo URLs
   const partyLogoMap = parties.reduce((acc, party) => {
     acc[party.name] = party.logo;
     return acc;
@@ -18,29 +19,34 @@ const CandidateList = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
       try {
         const token = localStorage.getItem("token");
-        if (!token) return;
+        if (!token) {
+          navigate("/login");
+          return;
+        }
 
         const userRes = await axios.get(`${import.meta.env.VITE_API_BASE}/candidate/currentUser`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setUser(userRes.data.user);
-        localStorage.setItem("user", JSON.stringify(userRes.data.user));
 
         const candidateRes = await axios.get(`${import.meta.env.VITE_API_BASE}/candidate`);
         setCandidates(candidateRes.data.data);
 
-        const partyRes = await axios.get(`${import.meta.env.VITE_API_BASE}/candidate/partylist`); // You need to expose this route
+        const partyRes = await axios.get(`${import.meta.env.VITE_API_BASE}/candidate/partylist`);
         setParties(partyRes.data.parties || []);
       } catch (err) {
         console.error(err);
-        setError("Failed to fetch user, candidates, or parties.");
+        setError("Failed to fetch necessary data. Please try again later.");
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchData();
-  }, []);
+  }, [navigate]);
 
   const voteHandler = async (candidateId) => {
     if (!user || user.role === "admin") {
@@ -59,74 +65,90 @@ const CandidateList = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      alert(res.data.message);
+      setMessage("Thank you! Your vote has been recorded.");
       setUser({ ...user, isvoted: true });
 
+      // Refresh candidate list to show updated vote counts for admins
       const refresh = await axios.get(`${import.meta.env.VITE_API_BASE}/candidate`);
       setCandidates(refresh.data.data);
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || "Something went wrong");
+      setError(err.response?.data?.message || "Something went wrong while voting.");
     }
   };
 
-  const handleCreateCandidate = () => {
-    navigate("/admin");
-  };
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen bg-gray-100">
+        <p className="text-xl text-gray-600 animate-pulse">Loading Candidates...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Candidate List</h2>
-        {user?.role === "admin" && (
-          <button
-            onClick={handleCreateCandidate}
-            className="px-4 py-2 bg-blue-600 text-white rounded shadow"
-          >
-            Create / Update Candidate
-          </button>
+    <div className="min-h-screen bg-gray-100 p-4 sm:p-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-4xl font-bold text-gray-800">Meet the Candidates</h2>
+          {user?.role === "Admin" && (
+            <button
+              onClick={() => navigate('/admin/campaign')}
+              className="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition duration-300"
+            >
+              Manage Campaign
+            </button>
+          )}
+        </div>
+
+        {error && <p className="text-red-500 bg-red-100 p-4 rounded-lg text-center mb-6">{error}</p>}
+        {message && <p className="text-green-600 bg-green-100 p-4 rounded-lg text-center mb-6">{message}</p>}
+
+        {candidates.length === 0 ? (
+          <div className="text-center py-20">
+            <p className="text-xl text-gray-500">No candidates have been declared yet.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {candidates.map((c) => (
+              <div key={c._id} className="bg-white rounded-lg shadow-lg overflow-hidden transform hover:-translate-y-2 transition duration-300">
+                <div className="p-6">
+                  <div className="flex items-center space-x-4">
+                    {partyLogoMap[c.party] ? (
+                      <img src={partyLogoMap[c.party]} alt={`${c.party} logo`} className="w-20 h-20 rounded-full border-4 border-gray-200 object-cover" />
+                    ) : (
+                      <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center">
+                        <FaUserTie className="text-gray-500 text-4xl" />
+                      </div>
+                    )}
+                    <div>
+                      <h3 className="text-2xl font-bold text-gray-800">{c.name}</h3>
+                      <p className="text-md text-gray-600">{c.party}</p>
+                      <p className="text-sm text-gray-500">Age: {c.age}</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-6">
+                    {user?.role === "Admin" ? (
+                      <p className="text-lg text-center text-green-700 font-semibold bg-green-100 py-2 rounded-lg">
+                        Votes: {c.voteCount}
+                      </p>
+                    ) : user?.role === "voter" && !user?.isvoted ? (
+                      <button
+                        onClick={() => voteHandler(c._id)}
+                        className="w-full flex items-center justify-center py-3 px-4 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition duration-300"
+                      >
+                        <FaVoteYea className="mr-2" /> Vote
+                      </button>
+                    ) : user?.role === "voter" && user?.isvoted ? (
+                       <p className="text-center text-gray-600 font-semibold bg-gray-200 py-3 rounded-lg">You have voted</p>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </div>
-
-      {error && <p className="text-red-500">{error}</p>}
-      {message && <p className="text-green-600">{message}</p>}
-
-      {candidates.length === 0 ? (
-        <p>No candidates available.</p>
-      ) : (
-        <ul className="space-y-4">
-          {candidates.map((c) => (
-            <li key={c._id} className="p-4 border rounded bg-gray-50 shadow-sm flex items-center space-x-4">
-              {partyLogoMap[c.party] ? (
-                <img src={partyLogoMap[c.party]} alt={`${c.party} logo`} className="w-16 h-16 rounded-full border" />
-              ) : (
-                <div className="w-16 h-16 rounded-full bg-gray-200" />
-              )}
-
-              <div className="flex-grow">
-                <p><strong>Name:</strong> {c.name}</p>
-                <p><strong>Party:</strong> {c.party}</p>
-                <p><strong>Age:</strong> {c.age}</p>
-
-                {user?.role === "Admin" ? (
-                  <p className="text-green-700 font-semibold">
-                    <strong>Votes:</strong> {c.voteCount}
-                  </p>
-                ) : user?.role === "voter" && !user?.isvoted ? (
-                  <button
-                    onClick={() => voteHandler(c._id)}
-                    className="mt-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                  >
-                    Vote
-                  </button>
-                ) : user?.role === "voter" && user?.isvoted ? (
-                  <p className="mt-2 text-gray-600">You have already voted.</p>
-                ) : null}
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
     </div>
   );
 };
