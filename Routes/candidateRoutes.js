@@ -290,6 +290,51 @@ router.get('/party/download', jwtAuthMiddleware, async (req, res) => {
   }
 });
 
+// DELETE /party/:partyId - Delete a party and all associated data (Admin Only)
+router.delete('/party/:partyId', jwtAuthMiddleware, async (req, res) => {
+    try {
+        if (!(await checkAdminRole(req.user.userData.id))) {
+            return res.status(403).json({ message: 'Access denied. Admins only.' });
+        }
+
+        const partyId = req.params.partyId;
+        const party = await Party.findById(partyId);
+        if (!party) {
+            return res.status(404).json({ message: 'Party not found.' });
+        }
+
+        // Find all candidates associated with this party
+        const candidatesToDelete = await Candidate.find({ party: party.name });
+        const candidateIds = candidatesToDelete.map(c => c._id);
+
+        // Find all users who voted for any of these candidates
+        const usersToReset = await User.find({ 'isvoted': true })
+            .where('votedCandidate').in(candidateIds);
+        
+        const userIdsToReset = usersToReset.map(u => u._id);
+
+        // Reset the isvoted status for these users
+        if (userIdsToReset.length > 0) {
+            await User.updateMany(
+                { _id: { $in: userIdsToReset } },
+                { $set: { isvoted: false } }
+            );
+        }
+
+        // Delete all candidates of the party
+        await Candidate.deleteMany({ party: party.name });
+
+        // Finally, delete the party itself
+        await Party.findByIdAndDelete(partyId);
+
+        res.status(200).json({ message: `Party '${party.name}' and all associated candidates and votes have been deleted.` });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+
 
 
 
