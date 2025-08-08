@@ -15,7 +15,8 @@ const cors = require("cors");
 
 const allowedOrigins = [
   "https://voting-application-gules.vercel.app",
-  "https://voting-application-git-main-jack9801s-projects.vercel.app"
+  "https://voting-application-git-main-jack9801s-projects.vercel.app",
+  "https://voting-app-frontend.vercel.app"
 ];
 
 app.use(cors({
@@ -36,6 +37,15 @@ app.use(bodyParser.json());
 // API Routes
 app.use('/user', userRoutes);
 app.use('/candidate', candidateRoutes);
+
+// Serve frontend files for production
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, 'Frontend/dist')));
+
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, 'Frontend/dist', 'index.html'));
+  });
+}
 
 
 // Start server

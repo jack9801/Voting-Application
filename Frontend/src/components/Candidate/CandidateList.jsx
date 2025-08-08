@@ -87,7 +87,7 @@ const CandidateList = () => {
         setCandidates(candidates.filter(c => c._id !== candidateId));
       } catch (err) {
         console.error(err);
-        setError(err.response?.data?.message || "Something went wrong while deleting the candidate.");
+        setError(err.response?.data?.message || `Error: ${err.message}`);
       }
     }
   };
