@@ -208,6 +208,37 @@ router.get('/currentUser', jwtAuthMiddleware, async (req, res) => {
   }
 });
 
+// Delete a candidate
+router.delete('/:id', jwtAuthMiddleware, async (req, res) => {
+    try {
+        if (!(await checkAdminRole(req.user.userData.id))) {
+            return res.status(403).json({ message: 'User is not an Admin' });
+        }
+        const candidateId = req.params.id;
+        const candidate = await Candidate.findById(candidateId);
+        if (!candidate) {
+            return res.status(404).json({ message: 'Candidate not found' });
+        }
+
+        // Find all users who voted for this candidate
+        const userIds = candidate.votes.map(vote => vote.user);
+
+        // Update the isVoted status for these users
+        await User.updateMany(
+            { _id: { $in: userIds } },
+            { $set: { isvoted: false } }
+        );
+
+        const response = await Candidate.findByIdAndDelete(candidateId);
+        if (!response) {
+            return res.status(404).json({ message: 'Candidate not found' });
+        }
+        res.status(200).json({ message: 'Candidate and their votes deleted successfully' });
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ err: 'Internal Server Error' });
+    }
+});
 
 
 module.exports=router;

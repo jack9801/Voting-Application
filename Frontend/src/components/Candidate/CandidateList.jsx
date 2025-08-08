@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { FaUserTie, FaVoteYea } from 'react-icons/fa';
+import { FaUserTie, FaVoteYea, FaTrash } from 'react-icons/fa';
 
 const CandidateList = () => {
   const [candidates, setCandidates] = useState([]);
@@ -68,12 +68,27 @@ const CandidateList = () => {
       setMessage("Thank you! Your vote has been recorded.");
       setUser({ ...user, isvoted: true });
 
-      // Refresh candidate list to show updated vote counts for admins
       const refresh = await axios.get(`${import.meta.env.VITE_API_BASE}/candidate`);
       setCandidates(refresh.data.data);
     } catch (err) {
       console.error(err);
       setError(err.response?.data?.message || "Something went wrong while voting.");
+    }
+  };
+
+  const deleteHandler = async (candidateId) => {
+    if (window.confirm("Are you sure you want to delete this candidate? This will reset the votes of users who voted for them.")) {
+      try {
+        const token = localStorage.getItem("token");
+        await axios.delete(`${import.meta.env.VITE_API_BASE}/candidate/${candidateId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setMessage("Candidate deleted successfully.");
+        setCandidates(candidates.filter(c => c._id !== candidateId));
+      } catch (err) {
+        console.error(err);
+        setError(err.response?.data?.message || "Something went wrong while deleting the candidate.");
+      }
     }
   };
 
@@ -129,9 +144,17 @@ const CandidateList = () => {
 
                   <div className="mt-6">
                     {user?.role === "Admin" ? (
-                      <p className="text-lg text-center text-green-700 font-semibold bg-green-100 py-2 rounded-lg">
-                        Votes: {c.voteCount}
-                      </p>
+                      <div className="flex justify-between items-center">
+                        <p className="text-lg text-green-700 font-semibold bg-green-100 py-2 px-4 rounded-lg">
+                            Votes: {c.voteCount}
+                        </p>
+                        <button
+                            onClick={() => deleteHandler(c._id)}
+                            className="p-3 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700 transition duration-300"
+                        >
+                            <FaTrash />
+                        </button>
+                      </div>
                     ) : user?.role === "voter" && !user?.isvoted ? (
                       <button
                         onClick={() => voteHandler(c._id)}

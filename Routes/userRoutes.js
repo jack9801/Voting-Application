@@ -3,6 +3,18 @@ const router=express.Router();
 const User=require('./../model/user')
 const Candidate=require('./../model/candidate')
 const {jwtAuthMiddleware, generateToken}=require('./../jwt');
+const checkAdminRole=async(userId)=>{
+    try{
+        const user=await User.findById(userId);
+        if(user.role==='Admin')
+            return true;
+
+    }
+    catch(err){
+        return false;
+
+    }
+}
 router.post('/signup', async (req, res) => {
   try {
     const data = req.body;
@@ -113,7 +125,19 @@ router.get('/profile',jwtAuthMiddleware,async(req,res)=>{
             
         }
     });
-
+// Get all voters (admin only)
+router.get('/voters', jwtAuthMiddleware, async (req, res) => {
+    try {
+        if (!(await checkAdminRole(req.user.userData.id))) {
+            return res.status(403).json({ message: 'User is not an Admin' });
+        }
+        const voters = await User.find({ role: 'voter' }, '-password');
+        res.status(200).json({ voters });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
 
 
 module.exports=router;

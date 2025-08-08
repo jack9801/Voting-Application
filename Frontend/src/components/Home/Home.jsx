@@ -75,6 +75,12 @@ const Home = () => {
                 >
                   View Results
                 </button>
+                <button
+                    onClick={() => navigate('/admin/voters')}
+                    className="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-6 rounded-lg text-lg transition duration-300 ease-in-out transform hover:scale-105"
+                >
+                    View Voters
+                </button>
               </>
             )}
             <button
