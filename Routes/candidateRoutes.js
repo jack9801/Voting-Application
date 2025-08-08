@@ -208,7 +208,7 @@ router.get('/currentUser', jwtAuthMiddleware, async (req, res) => {
   }
 });
 
-// Delete a candidate
+// DELETE a candidate (Admin only)
 router.delete('/:id', jwtAuthMiddleware, async (req, res) => {
     try {
         if (!(await checkAdminRole(req.user.userData.id))) {
@@ -216,29 +216,31 @@ router.delete('/:id', jwtAuthMiddleware, async (req, res) => {
         }
         const candidateId = req.params.id;
         const candidate = await Candidate.findById(candidateId);
+
         if (!candidate) {
-            return res.status(404).json({ message: 'Candidate not found' });
+            return res.status(404).json({ message: 'Candidate not found to delete' });
         }
 
-        // Find all users who voted for this candidate
         const userIds = candidate.votes.map(vote => vote.user);
 
-        // Update the isVoted status for these users
-        await User.updateMany(
-            { _id: { $in: userIds } },
-            { $set: { isvoted: false } }
-        );
+        if (userIds.length > 0) {
+            await User.updateMany(
+                { _id: { $in: userIds } },
+                { $set: { isvoted: false } }
+            );
+        }
 
         const response = await Candidate.findByIdAndDelete(candidateId);
         if (!response) {
-            return res.status(404).json({ message: 'Candidate not found' });
+            return res.status(404).json({ message: 'Candidate could not be deleted' });
         }
-        res.status(200).json({ message: 'Candidate and their votes deleted successfully' });
+        res.status(200).json({ message: 'Candidate deleted and voter statuses reset successfully' });
     } catch (err) {
         console.log(err);
-        res.status(500).json({ err: 'Internal Server Error' });
+        res.status(500).json({ message: 'Internal Server Error' });
     }
 });
+
 
 
 module.exports=router;
