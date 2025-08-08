@@ -29,10 +29,12 @@ export default function VoteResults() {
   }, []);
   
   const handleDownload = () => {
+      const token = localStorage.getItem('token'); // 1. Get the token from local storage
       axios({
           url: `${import.meta.env.VITE_API_BASE}/candidate/party/download`,
           method: 'GET',
-          responseType: 'blob', // Important for file downloads
+          responseType: 'blob',
+          headers: { Authorization: `Bearer ${token}` } // 2. Add the Authorization header
       }).then((response) => {
           const url = window.URL.createObjectURL(new Blob([response.data]));
           const link = document.createElement('a');
@@ -42,7 +44,7 @@ export default function VoteResults() {
           link.click();
           link.parentNode.removeChild(link);
       }).catch(err => {
-          setError("Could not download results file.");
+          setError("Could not download results file. You may not have the required permissions.");
       });
   };
 
