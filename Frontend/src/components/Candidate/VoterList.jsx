@@ -16,32 +16,32 @@ const VoterList = () => {
                 });
                 setVoters(res.data.voters);
             } catch (err) {
-                setError('Failed to fetch voters.');
+                setError('Failed to fetch voters. Only Admins can view this page.');
             } finally {
                 setLoading(false);
             }
         };
         fetchVoters();
     }, []);
-    
-    // Function to trigger the download
+
     const handleDownload = () => {
         const token = localStorage.getItem('token');
         axios({
             url: `${import.meta.env.VITE_API_BASE}/user/voters/download`,
             method: 'GET',
-            responseType: 'blob', 
+            responseType: 'blob', // Important for handling file downloads
             headers: { Authorization: `Bearer ${token}` }
         }).then((response) => {
+            // Create a URL for the blob
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', 'voters.csv');
+            link.setAttribute('download', 'voters.csv'); // Set the file name
             document.body.appendChild(link);
             link.click();
-            link.parentNode.removeChild(link);
+            link.parentNode.removeChild(link); // Clean up
         }).catch(err => {
-            setError("Could not download file. You may not have permission.");
+            setError("Could not download file. You may not have the required permissions.");
         });
     };
 
