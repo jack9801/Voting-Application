@@ -243,8 +243,14 @@ router.delete('/:id', jwtAuthMiddleware, async (req, res) => {
 
 
 // GET /candidate/party/download - Download vote results as CSV
-router.get('/party/download',jwtAuthMiddleware, async (req, res) => {
+router.get('/party/download', jwtAuthMiddleware, async (req, res) => {
   try {
+    // 1. Check if the user is an admin
+    if (!(await checkAdminRole(req.user.userData.id))) {
+        return res.status(403).json({ message: 'Access denied. Admins only.' });
+    }
+
+    // 2. Proceed with generating the CSV if the user is an admin
     const candidates = await Candidate.find();
     const partyVoteMap = {};
 
@@ -255,19 +261,24 @@ router.get('/party/download',jwtAuthMiddleware, async (req, res) => {
     });
 
     const voteRecord = Object.entries(partyVoteMap).map(([party, count]) => ({ party, count }));
+
+    if (voteRecord.length === 0) {
+        return res.status(404).send('No results to export.');
+    }
     
     const fields = ['party', 'count'];
     const json2csvParser = new Parser({ fields });
     const csv = json2csvParser.parse(voteRecord);
 
     res.header('Content-Type', 'text/csv');
-    res.attachment("results.csv");
+    res.attachment("election-results.csv");
     return res.send(csv);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 
 
 
