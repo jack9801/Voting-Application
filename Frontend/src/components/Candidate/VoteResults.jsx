@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { FaPoll } from 'react-icons/fa';
+import { FaPoll, FaDownload } from 'react-icons/fa';
 
 export default function VoteResults() {
   const [results, setResults] = useState([]);
@@ -9,6 +9,7 @@ export default function VoteResults() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setLoading(true);
     axios.get(`${import.meta.env.VITE_API_BASE}/candidate/party`)
       .then(res => {
         if (Array.isArray(res.data)) {
@@ -26,6 +27,24 @@ export default function VoteResults() {
       })
       .finally(() => setLoading(false));
   }, []);
+  
+  const handleDownload = () => {
+      axios({
+          url: `${import.meta.env.VITE_API_BASE}/candidate/party/download`,
+          method: 'GET',
+          responseType: 'blob', // Important for file downloads
+      }).then((response) => {
+          const url = window.URL.createObjectURL(new Blob([response.data]));
+          const link = document.createElement('a');
+          link.href = url;
+          link.setAttribute('download', 'election-results.csv');
+          document.body.appendChild(link);
+          link.click();
+          link.parentNode.removeChild(link);
+      }).catch(err => {
+          setError("Could not download results file.");
+      });
+  };
 
   if (loading) {
     return (
@@ -42,9 +61,18 @@ export default function VoteResults() {
   return (
     <div className="min-h-screen bg-gray-100 py-12 px-4">
       <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-2xl p-8">
-        <div className="flex items-center justify-center mb-6">
-          <FaPoll className="text-4xl text-indigo-600 mr-3" />
-          <h2 className="text-4xl font-extrabold text-gray-800">Live Vote Results</h2>
+        <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center">
+              <FaPoll className="text-4xl text-indigo-600 mr-3" />
+              <h2 className="text-4xl font-extrabold text-gray-800">Live Vote Results</h2>
+            </div>
+            <button
+                onClick={handleDownload}
+                className="flex items-center px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 transition duration-300"
+            >
+                <FaDownload className="mr-2" />
+                Export
+            </button>
         </div>
         
         {results.length === 0 ? (

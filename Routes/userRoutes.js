@@ -2,6 +2,7 @@ const express = require('express')
 const router=express.Router();
 const User=require('./../model/user')
 const Candidate=require('./../model/candidate')
+const { Parser } = require('json2csv');
 const {jwtAuthMiddleware, generateToken}=require('./../jwt');
 const checkAdminRole=async(userId)=>{
     try{
@@ -137,6 +138,33 @@ router.get('/voters', jwtAuthMiddleware, async (req, res) => {
         console.error(err);
         res.status(500).json({ message: 'Internal Server Error' });
     }
+});
+
+// GET /candidate/party/download - Download vote results as CSV
+router.get('/party/download', async (req, res) => {
+  try {
+    const candidates = await Candidate.find();
+    const partyVoteMap = {};
+
+    candidates.forEach(candidate => {
+      const party = candidate.party;
+      const votes = candidate.voteCount;
+      partyVoteMap[party] = (partyVoteMap[party] || 0) + votes;
+    });
+
+    const voteRecord = Object.entries(partyVoteMap).map(([party, count]) => ({ party, count }));
+    
+    const fields = ['party', 'count'];
+    const json2csvParser = new Parser({ fields });
+    const csv = json2csvParser.parse(voteRecord);
+
+    res.header('Content-Type', 'text/csv');
+    res.attachment("results.csv");
+    return res.send(csv);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
 
 
