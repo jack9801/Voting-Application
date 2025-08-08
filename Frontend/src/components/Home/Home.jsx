@@ -57,13 +57,7 @@ const Home = () => {
             </button>
             {role === 'Admin' && (
               <>
-                <button
-                  onClick={() => navigate('/admin/candidate-form')}
-                  className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded-lg text-lg transition duration-300 ease-in-out transform hover:scale-105"
-                >
-                  Manage Candidates
-                </button>
-                <button
+              <button
                     onClick={() => navigate("/admin/campaign")}
                     className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded w-full"
                 >
