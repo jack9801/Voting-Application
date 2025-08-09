@@ -1,5 +1,4 @@
-// AuthContext.jsx
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 
 const AuthContext = createContext();
 
@@ -16,22 +15,31 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const login = (token, userRole) => {
+  // Use useCallback to memoize the login/logout functions
+  const login = useCallback((token, userRole) => {
     localStorage.setItem('token', token);
     localStorage.setItem('role', userRole);
     setIsAuthenticated(true);
     setRole(userRole);
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     localStorage.removeItem('token');
     localStorage.removeItem('role');
     setIsAuthenticated(false);
     setRole(null);
-  };
+  }, []);
+
+  // Use useMemo to memoize the context value
+  const authContextValue = useMemo(() => ({
+    isAuthenticated,
+    role,
+    login,
+    logout
+  }), [isAuthenticated, role, login, logout]);
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, role, login, logout }}>
+    <AuthContext.Provider value={authContextValue}>
       {children}
     </AuthContext.Provider>
   );

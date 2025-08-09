@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { FaPlusCircle, FaUserPlus, FaUsers, FaTrash, FaEdit, FaTimesCircle } from 'react-icons/fa';
 
@@ -8,8 +8,8 @@ const AdminCampaign = () => {
   const [candidateData, setCandidateData] = useState({ name: '', age: '', party: '' });
   
   // State for editing
-  const [editingParty, setEditingParty] = useState(null); // Will hold the party being edited
-  const [editingCandidate, setEditingCandidate] = useState(null); // Will hold the candidate being edited
+  const [editingParty, setEditingParty] = useState(null);
+  const [editingCandidate, setEditingCandidate] = useState(null);
 
   // UI State
   const [logoFile, setLogoFile] = useState(null);
@@ -19,28 +19,29 @@ const AdminCampaign = () => {
   const [loading, setLoading] = useState({ party: false, candidate: false });
   const [message, setMessage] = useState('');
 
-  // Fetch initial data
-  useEffect(() => {
-    fetchParties();
-    fetchCandidates();
-  }, []);
-
-  const fetchParties = async () => {
+  // --- Memoized Data Fetching Functions ---
+  const fetchParties = useCallback(async () => {
     try {
       const res = await axios.get(`${import.meta.env.VITE_API_BASE}/candidate/partylist`);
       setParties(res.data.parties || []);
     } catch (err) { console.error('Failed to fetch parties:', err); }
-  };
+  }, []);
 
-  const fetchCandidates = async () => {
+  const fetchCandidates = useCallback(async () => {
     try {
       const res = await axios.get(`${import.meta.env.VITE_API_BASE}/candidate`);
       setCandidates(res.data.data || []);
     } catch (err) { console.error('Failed to fetch candidates:', err); }
-  };
+  }, []);
 
-  // Handlers for form input changes
-  const handlePartyChange = (e) => {
+  // Effect to fetch initial data on component mount
+  useEffect(() => {
+    fetchParties();
+    fetchCandidates();
+  }, [fetchParties, fetchCandidates]);
+
+  // --- Memoized Event Handlers ---
+  const handlePartyChange = useCallback((e) => {
     const { name, value, files } = e.target;
     if (name === 'logo' && files?.[0]) {
       setLogoPreview(URL.createObjectURL(files[0]));
@@ -48,26 +49,32 @@ const AdminCampaign = () => {
     } else {
       setPartyData(prev => ({ ...prev, [name]: value }));
     }
-  };
+  }, []);
 
-  const handleCandidateChange = (e) => {
+  const handleCandidateChange = useCallback((e) => {
     setCandidateData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-  };
+  }, []);
 
-  // CRUD Operations for Parties
-  const handlePartySubmit = async (e) => {
+  // --- Memoized CRUD Operations for Parties ---
+  const cancelEditParty = useCallback(() => {
+    setEditingParty(null);
+    setPartyData({ name: '', colorTheme: '#000000', startTime: '', endTime: '' });
+    setLogoPreview(null);
+    setLogoFile(null);
+  }, []);
+
+  const handlePartySubmit = useCallback(async (e) => {
     e.preventDefault();
     setLoading(prev => ({ ...prev, party: true }));
     setMessage('');
     const token = localStorage.getItem('token');
     
-    // Logic to either Update (PUT) or Create (POST)
+    const utcStartTime = new Date(partyData.startTime).toISOString();
+    const utcEndTime = new Date(partyData.endTime).toISOString();
+
     if (editingParty) {
         // UPDATE PARTY
         try {
-            const utcStartTime = new Date(partyData.startTime).toISOString();
-            const utcEndTime = new Date(partyData.endTime).toISOString();
-            
             await axios.put(`${import.meta.env.VITE_API_BASE}/candidate/party/${editingParty._id}`, 
             { ...partyData, startTime: utcStartTime, endTime: utcEndTime }, 
             { headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } });
@@ -81,8 +88,6 @@ const AdminCampaign = () => {
     } else {
         // CREATE PARTY
         const formData = new FormData();
-        const utcStartTime = new Date(partyData.startTime).toISOString();
-        const utcEndTime = new Date(partyData.endTime).toISOString();
         formData.append('name', partyData.name);
         formData.append('colorTheme', partyData.colorTheme);
         formData.append('logo', logoFile);
@@ -95,36 +100,28 @@ const AdminCampaign = () => {
             });
             setMessage('Party created successfully!');
             fetchParties();
-            cancelEditParty(); // Resets the form
+            cancelEditParty();
             e.target.reset();
         } catch (err) {
             setMessage(err.response?.data?.message || 'Failed to create party');
         }
     }
     setLoading(prev => ({ ...prev, party: false }));
-  };
+  }, [editingParty, partyData, logoFile, fetchParties, cancelEditParty]);
 
-  const editParty = (party) => {
+  const editParty = useCallback((party) => {
     setEditingParty(party);
     setPartyData({
         name: party.name,
         colorTheme: party.colorTheme,
-        // The browser requires 'datetime-local' input in a specific format
         startTime: new Date(party.startTime).toISOString().slice(0, 16),
         endTime: new Date(party.endTime).toISOString().slice(0, 16)
     });
-    setLogoPreview(party.logo); // Show existing logo
-    setLogoFile(null); // Clear file input
-  };
-  
-  const cancelEditParty = () => {
-    setEditingParty(null);
-    setPartyData({ name: '', colorTheme: '#000000', startTime: '', endTime: '' });
-    setLogoPreview(null);
+    setLogoPreview(party.logo);
     setLogoFile(null);
-  };
+  }, []);
 
-  const deleteParty = async (partyId, partyName) => {
+  const deleteParty = useCallback(async (partyId, partyName) => {
     if (window.confirm(`Are you sure you want to delete ${partyName}? This will delete all its candidates and reset their votes.`)) {
         const token = localStorage.getItem('token');
         try {
@@ -133,15 +130,20 @@ const AdminCampaign = () => {
             });
             setMessage(res.data.message);
             fetchParties();
-            fetchCandidates(); // Also refresh candidates
+            fetchCandidates();
         } catch (err) {
             setMessage(err.response?.data?.message || 'Failed to delete party');
         }
     }
-  };
+  }, [fetchParties, fetchCandidates]);
 
-  // CRUD Operations for Candidates
-    const handleCandidateSubmit = async (e) => {
+  // --- Memoized CRUD Operations for Candidates ---
+    const cancelEditCandidate = useCallback(() => {
+        setEditingCandidate(null);
+        setCandidateData({ name: '', age: '', party: '' });
+    }, []);
+
+    const handleCandidateSubmit = useCallback(async (e) => {
         e.preventDefault();
         setLoading(prev => ({ ...prev, candidate: true }));
         setMessage('');
@@ -164,19 +166,14 @@ const AdminCampaign = () => {
             setMessage(err.response?.data?.message || `Failed to ${editingCandidate ? 'update' : 'create'} candidate`);
         }
         setLoading(prev => ({ ...prev, candidate: false }));
-    };
+    }, [editingCandidate, candidateData, fetchCandidates, cancelEditCandidate]);
 
-    const editCandidate = (candidate) => {
+    const editCandidate = useCallback((candidate) => {
         setEditingCandidate(candidate);
         setCandidateData({ name: candidate.name, age: candidate.age, party: candidate.party });
-    };
+    }, []);
 
-    const cancelEditCandidate = () => {
-        setEditingCandidate(null);
-        setCandidateData({ name: '', age: '', party: '' });
-    };
-
-    const deleteCandidate = async (candidateId, candidateName) => {
+    const deleteCandidate = useCallback(async (candidateId, candidateName) => {
         if (window.confirm(`Are you sure you want to delete candidate ${candidateName}?`)) {
             const token = localStorage.getItem('token');
             try {
@@ -189,8 +186,7 @@ const AdminCampaign = () => {
                 setMessage(err.response?.data?.message || 'Failed to delete candidate');
             }
         }
-    };
-
+    }, [fetchCandidates]);
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 sm:p-8">
