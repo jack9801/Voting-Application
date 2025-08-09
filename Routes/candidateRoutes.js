@@ -335,7 +335,58 @@ router.delete('/party/:partyId', jwtAuthMiddleware, async (req, res) => {
     }
 });
 
+// PUT /candidate/:candidateId - Update an existing candidate (Admin Only)
+router.put('/:candidateId', jwtAuthMiddleware, async (req, res) => {
+    try {
+        if (!(await checkAdminRole(req.user.userData.id))) {
+            return res.status(403).json({ message: 'Access denied. Admins only.' });
+        }
+        const candidateId = req.params.candidateId;
+        const updatedData = req.body;
 
+        const response = await Candidate.findByIdAndUpdate(candidateId, updatedData, {
+            new: true, // Return the updated document
+            runValidators: true, // Run mongoose validation
+        });
+
+        if (!response) {
+            return res.status(404).json({ message: 'Candidate not found.' });
+        }
+        res.status(200).json({ message: 'Candidate updated successfully', data: response });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+
+
+// PUT /party/:partyId - Update an existing party (Admin Only)
+router.put('/party/:partyId', jwtAuthMiddleware, async (req, res) => {
+    try {
+        if (!(await checkAdminRole(req.user.userData.id))) {
+            return res.status(403).json({ message: 'Access denied. Admins only.' });
+        }
+        const partyId = req.params.partyId;
+        const { name, colorTheme, startTime, endTime } = req.body;
+
+        const utcStartTime = new Date(startTime).toISOString();
+        const utcEndTime = new Date(endTime).toISOString();
+
+        const updatedParty = await Party.findByIdAndUpdate(
+            partyId,
+            { name, colorTheme, startTime: utcStartTime, endTime: utcEndTime },
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedParty) {
+            return res.status(404).json({ message: 'Party not found.' });
+        }
+        res.status(200).json({ message: 'Party updated successfully', data: updatedParty });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
 
 
 module.exports=router;
